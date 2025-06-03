@@ -6,7 +6,6 @@ import { FileText, Upload, User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardContentProps {
   userEmail: string;
@@ -15,22 +14,12 @@ interface DashboardContentProps {
 const DashboardContent = ({ userEmail }: DashboardContentProps) => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [portfolioId, setPortfolioId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Check if user is authenticated
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to upload your resume.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     // Check file type
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -56,8 +45,10 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
     setUploading(true);
     
     try {
+      // Generate a unique session ID for this upload
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/resume_${Date.now()}.${fileExt}`;
+      const fileName = `${sessionId}/resume_${Date.now()}.${fileExt}`;
 
       const { error } = await supabase.storage
         .from('resumes')
@@ -72,9 +63,10 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
         });
       } else {
         setResumeUploaded(true);
+        setPortfolioId(sessionId);
         toast({
           title: "Success!",
-          description: "Resume uploaded successfully!",
+          description: "Resume uploaded successfully! You can now view your portfolio.",
         });
       }
     } catch (error) {
@@ -98,8 +90,8 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
         <div className="flex items-center gap-3">
           <User className="h-8 w-8 text-primary" />
           <div>
-            <h2 className="text-2xl font-bold">Welcome back!</h2>
-            <p className="text-muted-foreground">{userEmail}</p>
+            <h2 className="text-2xl font-bold">Welcome!</h2>
+            <p className="text-muted-foreground">Upload your resume to generate a beautiful portfolio</p>
           </div>
         </div>
       </Card>
@@ -120,16 +112,16 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
             id="resume-upload"
             accept=".pdf,.doc,.docx"
             onChange={handleResumeUpload}
-            disabled={uploading || !user}
+            disabled={uploading}
             className="hidden"
           />
           <Button 
             className="w-full" 
             onClick={() => document.getElementById('resume-upload')?.click()}
-            disabled={uploading || !user}
+            disabled={uploading}
           >
             <FileText className="h-4 w-4 mr-2" />
-            {uploading ? "Uploading..." : !user ? "Login Required" : "Upload Resume"}
+            {uploading ? "Uploading..." : "Upload Resume"}
           </Button>
         </div>
         
@@ -145,30 +137,30 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
           <h3 className="text-lg font-semibold">Portfolio Status</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          {resumeUploaded ? "Portfolio ready to view!" : "No portfolio created yet"}
+          {resumeUploaded ? "Portfolio ready to view!" : "Upload a resume to generate your portfolio"}
         </p>
-        {resumeUploaded ? (
+        {resumeUploaded && portfolioId ? (
           <Button asChild variant="default" className="w-full">
-            <Link to={`/portfolio/${user?.id || 'demo'}`}>See Portfolio</Link>
+            <Link to={`/portfolio/${portfolioId}`}>View Portfolio</Link>
           </Button>
         ) : (
           <Button variant="outline" className="w-full" disabled>
-            Generate Portfolio
+            Upload Resume First
           </Button>
         )}
       </Card>
 
-      {/* Settings Card */}
+      {/* Info Card */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-4">
           <Settings className="h-6 w-6 text-primary" />
-          <h3 className="text-lg font-semibold">Account Settings</h3>
+          <h3 className="text-lg font-semibold">How it works</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          Manage your account preferences
+          Simply upload your resume and we'll generate a beautiful portfolio for you instantly
         </p>
-        <Button variant="outline" className="w-full">
-          View Settings
+        <Button variant="outline" className="w-full" disabled>
+          No setup required!
         </Button>
       </Card>
     </div>

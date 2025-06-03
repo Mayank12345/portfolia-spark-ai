@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,7 @@ const PortfolioPage = () => {
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
-        // Check if resume exists for this user
+        // Check if resume exists for this session/user
         const { data } = await supabase
           .storage
           .from('resumes')
@@ -141,7 +140,7 @@ const PortfolioPage = () => {
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Portfolio not found</p>
           <Button asChild variant="outline">
-            <Link to="/login">← Back to Dashboard</Link>
+            <Link to="/">← Back to Home</Link>
           </Button>
         </div>
       </div>
@@ -152,7 +151,7 @@ const PortfolioPage = () => {
     <main className="container mx-auto max-w-4xl px-4 py-10 space-y-10">
       {/* Back button */}
       <Button asChild variant="outline">
-        <Link to="/login">← Back to Dashboard</Link>
+        <Link to="/">← Back to Home</Link>
       </Button>
 
       {/* Header */}
