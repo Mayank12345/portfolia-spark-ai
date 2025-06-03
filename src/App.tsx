@@ -4,8 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -15,12 +17,16 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Home route - displays welcome message and login button */}
-          <Route path="/" element={<Home />} />
-          {/* Login route - placeholder login page */}
-          <Route path="/login" element={<Login />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Home route - displays welcome message and dynamic button */}
+            <Route path="/" element={<Home />} />
+            {/* Login route - magic-link authentication */}
+            <Route path="/login" element={<Login />} />
+            {/* Dashboard route - protected page for authenticated users */}
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

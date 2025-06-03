@@ -1,14 +1,28 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  // Navigate to login page when button is clicked
-  const handleLoginClick = () => {
-    navigate("/login");
+  // Navigate to appropriate page based on auth state
+  const handleActionClick = () => {
+    if (user) {
+      navigate("/dashboard");
+    } else {
+      navigate("/login");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -21,16 +35,21 @@ const Home = () => {
           <p className="text-lg text-muted-foreground max-w-sm mx-auto">
             Transform your resume into a stunning portfolio with the power of AI
           </p>
+          {user && (
+            <p className="text-sm text-muted-foreground">
+              Welcome back, {user.email}!
+            </p>
+          )}
         </div>
         
-        {/* Login button using Shadcn UI component */}
+        {/* Dynamic button based on auth state */}
         <div className="pt-4">
           <Button 
-            onClick={handleLoginClick}
+            onClick={handleActionClick}
             size="lg"
             className="w-full sm:w-auto min-w-[200px]"
           >
-            Get Started
+            {user ? "Go to Dashboard" : "Get Started"}
           </Button>
         </div>
       </div>
