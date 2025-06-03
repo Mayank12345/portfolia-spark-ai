@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,8 @@ const PortfolioPage = () => {
           return;
         }
 
+        console.log('Fetching portfolio for session ID:', userId);
+
         // Fetch portfolio data from database
         const { data: portfolioData, error } = await supabase
           .from('portfolios')
@@ -32,19 +33,40 @@ const PortfolioPage = () => {
           console.error("Error fetching portfolio:", error);
           setPortfolio(getDefaultResumeData());
         } else if (portfolioData) {
-          // Convert database format to ParsedResume format
+          console.log('Raw portfolio data from database:', portfolioData);
+          
+          // Convert database format to ParsedResume format with proper type casting
           const formattedPortfolio: ParsedResume = {
             name: portfolioData.name,
             title: portfolioData.title,
             summary: portfolioData.summary,
-            skills: portfolioData.skills,
-            experience: portfolioData.experience,
-            projects: portfolioData.projects,
-            contactLinks: portfolioData.contact_links,
-            education: portfolioData.education
+            skills: portfolioData.skills || [],
+            experience: Array.isArray(portfolioData.experience) ? portfolioData.experience as Array<{
+              company: string;
+              role: string;
+              years: string;
+              details: string;
+            }> : [],
+            projects: Array.isArray(portfolioData.projects) ? portfolioData.projects as Array<{
+              name: string;
+              url: string;
+              description: string;
+            }> : [],
+            contactLinks: Array.isArray(portfolioData.contact_links) ? portfolioData.contact_links as Array<{
+              type: string;
+              url: string;
+            }> : [],
+            education: Array.isArray(portfolioData.education) ? portfolioData.education as Array<{
+              institution: string;
+              degree: string;
+              year: string;
+            }> : []
           };
+          
+          console.log('Formatted portfolio data:', formattedPortfolio);
           setPortfolio(formattedPortfolio);
         } else {
+          console.log('No portfolio data found, using default');
           setPortfolio(getDefaultResumeData());
         }
       } catch (error) {
