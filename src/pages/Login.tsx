@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +15,6 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -29,8 +29,12 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
     setLoading(true);
-    setError("");
     
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -40,11 +44,16 @@ const Login = () => {
         }
       });
 
-      if (error) throw error;
-      
-      setSuccess(true);
+      if (error) {
+        console.error("Auth error:", error);
+        toast.error(error.message || "Failed to send magic link");
+      } else {
+        setSuccess(true);
+        toast.success("Magic link sent! Check your email.");
+      }
     } catch (error: any) {
-      setError(error.message);
+      console.error("Unexpected error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -81,6 +90,9 @@ const Login = () => {
               <p className="text-green-800 font-medium">
                 ✅ Check your email for the login link
               </p>
+              <p className="text-green-600 text-sm mt-2">
+                The link will redirect you to your dashboard
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,10 +107,6 @@ const Login = () => {
                   className="border p-2 rounded w-full"
                 />
               </div>
-              
-              {error && (
-                <p className="text-red-600 text-sm">{error}</p>
-              )}
               
               <Button 
                 type="submit" 
