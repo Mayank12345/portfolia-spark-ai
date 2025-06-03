@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { parseResumeFromFile, getDefaultResumeData, type ParsedResume } from "@/utils/resumeParser";
-import { ArrowLeft, Mail, ExternalLink, MapPin } from "lucide-react";
+import { ArrowLeft, Mail, ExternalLink, MapPin, Download, Share2, Globe, Briefcase, GraduationCap, Code2, User, Phone, Calendar } from "lucide-react";
 
 const PortfolioPage = () => {
   const { userId } = useParams();
@@ -21,7 +21,6 @@ const PortfolioPage = () => {
           return;
         }
 
-        // Get the latest resume file for this session
         const { data: files } = await supabase
           .storage
           .from('resumes')
@@ -30,14 +29,12 @@ const PortfolioPage = () => {
         if (files && files.length > 0) {
           const fileName = files[0].name;
           
-          // Download the file to parse it
           const { data: fileData } = await supabase
             .storage
             .from('resumes')
             .download(`${userId}/${fileName}`);
 
           if (fileData) {
-            // Create a File object for parsing
             const file = new File([fileData], fileName, { type: 'application/pdf' });
             
             try {
@@ -45,7 +42,6 @@ const PortfolioPage = () => {
               setPortfolio(parsedData);
             } catch (error) {
               console.error("Error parsing resume:", error);
-              // Use default data if parsing fails
               setPortfolio(getDefaultResumeData());
             }
           } else {
@@ -67,10 +63,16 @@ const PortfolioPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-muted-foreground">Generating your portfolio...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="animate-spin h-16 w-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto"></div>
+            <div className="absolute inset-0 h-16 w-16 border-4 border-transparent border-t-blue-300 rounded-full mx-auto animate-ping"></div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xl font-medium text-slate-700">Crafting your portfolio...</p>
+            <p className="text-slate-500">This might take a moment</p>
+          </div>
         </div>
       </div>
     );
@@ -78,13 +80,19 @@ const PortfolioPage = () => {
 
   if (!portfolio) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-muted-foreground text-lg">Portfolio not found</p>
-          <Button asChild variant="outline">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <User className="h-8 w-8 text-red-600" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-xl font-medium text-slate-700">Portfolio not found</p>
+            <p className="text-slate-500">The requested portfolio could not be loaded</p>
+          </div>
+          <Button asChild variant="outline" className="bg-white hover:bg-slate-50">
             <Link to="/">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
+              Create New Portfolio
             </Link>
           </Button>
         </div>
@@ -93,52 +101,99 @@ const PortfolioPage = () => {
   }
 
   const getContactIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'email':
-        return <Mail className="h-4 w-4" />;
-      case 'location':
-        return <MapPin className="h-4 w-4" />;
-      default:
-        return <ExternalLink className="h-4 w-4" />;
-    }
+    const iconType = type.toLowerCase();
+    if (iconType.includes('email') || iconType.includes('mail')) return <Mail className="h-4 w-4" />;
+    if (iconType.includes('phone')) return <Phone className="h-4 w-4" />;
+    if (iconType.includes('location') || iconType.includes('address')) return <MapPin className="h-4 w-4" />;
+    if (iconType.includes('website') || iconType.includes('portfolio')) return <Globe className="h-4 w-4" />;
+    return <ExternalLink className="h-4 w-4" />;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto max-w-4xl px-4 py-8 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* Navigation */}
-        <Button asChild variant="ghost" className="mb-4">
-          <Link to="/">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Create Another Portfolio
-          </Link>
-        </Button>
-
-        {/* Header */}
-        <header className="text-center space-y-6 py-12">
-          <div className="space-y-4">
-            <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              {portfolio.name}
-            </h1>
-            <h2 className="text-2xl text-muted-foreground font-medium">
-              {portfolio.title}
-            </h2>
+        <div className="flex justify-between items-center">
+          <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-white/50">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Create Another Portfolio
+            </Link>
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="bg-white/80 hover:bg-white">
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+            <Button variant="outline" size="sm" className="bg-white/80 hover:bg-white">
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
           </div>
-          <p className="text-lg leading-relaxed max-w-3xl mx-auto text-gray-600">
-            {portfolio.summary}
-          </p>
-        </header>
+        </div>
 
-        {/* Skills */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Skills & Technologies</CardTitle>
-            <CardDescription>Technical expertise and core competencies</CardDescription>
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative px-8 py-16 md:px-16 md:py-24">
+            <div className="max-w-4xl">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+                    {portfolio.name}
+                  </h1>
+                  <div className="flex items-center gap-3">
+                    <Briefcase className="h-6 w-6" />
+                    <h2 className="text-xl md:text-2xl font-medium opacity-90">
+                      {portfolio.title}
+                    </h2>
+                  </div>
+                </div>
+                <p className="text-lg md:text-xl leading-relaxed opacity-90 max-w-3xl">
+                  {portfolio.summary}
+                </p>
+                <div className="flex flex-wrap gap-3 pt-4">
+                  {portfolio.contactLinks.slice(0, 3).map((link, index) => (
+                    <Button 
+                      key={index} 
+                      variant="secondary" 
+                      size="sm" 
+                      asChild
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                    >
+                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        {getContactIcon(link.type)}
+                        <span className="ml-2">{link.type}</span>
+                      </a>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Skills Section */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="pb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Code2 className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">Skills & Expertise</CardTitle>
+                <CardDescription className="text-slate-600">Technical skills and core competencies</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
-              {portfolio.skills.map(skill => (
-                <Badge key={skill} variant="secondary" className="px-4 py-2 text-sm font-medium">
+              {portfolio.skills.map((skill, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary" 
+                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 hover:shadow-md transition-all duration-200"
+                >
                   {skill}
                 </Badge>
               ))}
@@ -146,40 +201,74 @@ const PortfolioPage = () => {
           </CardContent>
         </Card>
 
-        {/* Experience */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Professional Experience</CardTitle>
-            <CardDescription>Career highlights and achievements</CardDescription>
+        {/* Experience Section */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="pb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Briefcase className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">Professional Experience</CardTitle>
+                <CardDescription className="text-slate-600">Career journey and achievements</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             {portfolio.experience.map((exp, index) => (
-              <div key={index} className="border-l-4 border-primary pl-6 space-y-2">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <h3 className="text-xl font-semibold">{exp.role}</h3>
-                  <Badge variant="outline" className="w-fit">{exp.years}</Badge>
+              <div key={index} className="relative pl-8 pb-8 last:pb-0">
+                <div className="absolute left-0 top-1 h-6 w-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <div className="h-2 w-2 bg-white rounded-full"></div>
                 </div>
-                <p className="text-lg text-primary font-medium">{exp.company}</p>
-                <p className="text-gray-600 leading-relaxed">{exp.details}</p>
+                {index < portfolio.experience.length - 1 && (
+                  <div className="absolute left-3 top-7 w-px h-full bg-gradient-to-b from-blue-200 to-transparent"></div>
+                )}
+                <div className="space-y-3">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <h3 className="text-xl font-semibold text-slate-900">{exp.role}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-slate-500" />
+                      <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
+                        {exp.years}
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-blue-600">{exp.company}</p>
+                  <p className="text-slate-600 leading-relaxed">{exp.details}</p>
+                </div>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        {/* Projects */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Featured Projects</CardTitle>
-            <CardDescription>Showcase of recent work and contributions</CardDescription>
+        {/* Projects Section */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="pb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Code2 className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">Featured Projects</CardTitle>
+                <CardDescription className="text-slate-600">Notable work and contributions</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {portfolio.projects.map((project, index) => (
-                <Card key={index} className="border border-gray-200 hover:shadow-md transition-shadow">
-                  <CardHeader>
+                <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-slate-200 bg-gradient-to-br from-white to-slate-50">
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
-                      <Button variant="ghost" size="sm" asChild>
+                      <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                        {project.name}
+                      </CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        asChild
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
                         <a href={project.url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="h-4 w-4" />
                         </a>
@@ -187,7 +276,7 @@ const PortfolioPage = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600">{project.description}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed">{project.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -195,19 +284,68 @@ const PortfolioPage = () => {
           </CardContent>
         </Card>
 
-        {/* Contact */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Get In Touch</CardTitle>
-            <CardDescription>Ready to collaborate? Let's connect!</CardDescription>
+        {/* Education Section */}
+        {portfolio.education && portfolio.education.length > 0 && (
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardHeader className="pb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <GraduationCap className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">Education</CardTitle>
+                  <CardDescription className="text-slate-600">Academic background and qualifications</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {portfolio.education.map((edu, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">{edu.degree}</h3>
+                      <p className="text-amber-700 font-medium">{edu.institution}</p>
+                    </div>
+                    <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                      {edu.year}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Contact Section */}
+        <Card className="bg-gradient-to-r from-slate-900 to-blue-900 text-white border-0 shadow-xl">
+          <CardHeader className="pb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <Mail className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">Let's Connect</CardTitle>
+                <CardDescription className="text-blue-100">Ready to collaborate? Let's get in touch!</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {portfolio.contactLinks.map((link, index) => (
-                <Button key={index} variant="outline" className="justify-start" asChild>
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                <Button 
+                  key={index} 
+                  variant="outline" 
+                  className="justify-start h-auto p-4 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white transition-all duration-200" 
+                  asChild
+                >
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
                     {getContactIcon(link.type)}
-                    <span className="ml-2">{link.type}</span>
+                    <div className="text-left">
+                      <div className="font-medium">{link.type}</div>
+                      <div className="text-sm opacity-75 truncate">
+                        {link.url.replace(/^(mailto:|https?:\/\/)/, '')}
+                      </div>
+                    </div>
                   </a>
                 </Button>
               ))}
@@ -216,8 +354,10 @@ const PortfolioPage = () => {
         </Card>
 
         {/* Footer */}
-        <div className="text-center py-8 text-gray-500">
-          <p>Portfolio generated automatically from resume</p>
+        <div className="text-center py-8">
+          <p className="text-slate-500">
+            Portfolio generated with ❤️ by PortfolioAI
+          </p>
         </div>
       </div>
     </div>

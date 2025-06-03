@@ -1,6 +1,4 @@
-
-// Simple resume parser - in a real application, you'd use a more sophisticated parser
-// or a service like Resume Parser API to extract structured data from PDF/DOC files
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ParsedResume {
   name: string;
@@ -29,115 +27,91 @@ export interface ParsedResume {
   }>;
 }
 
-// This is a simplified parser that generates realistic data
-// In production, you would integrate with a PDF parsing library or service
-export const parseResumeFromFile = async (file: File): Promise<ParsedResume> => {
-  // For demonstration, we'll create different profiles based on file name patterns
-  // In production, you'd parse the actual file content
-  
+// Extract text content from PDF using a simple approach
+const extractTextFromPDF = async (file: File): Promise<string> => {
+  // For now, we'll use a placeholder approach
+  // In a real implementation, you'd use a PDF parsing library
   const fileName = file.name.toLowerCase();
   
-  // Generate varied sample data based on file characteristics
-  const profiles = [
-    {
-      name: "Sarah Johnson",
-      title: "Frontend Developer",
-      summary: "Passionate frontend developer with 3+ years of experience creating responsive web applications using React, TypeScript, and modern CSS frameworks. Strong focus on user experience and performance optimization.",
-      skills: [
-        "React", "TypeScript", "JavaScript", "HTML5", "CSS3", "Tailwind CSS",
-        "Next.js", "Redux", "Git", "Figma", "Responsive Design", "Performance Optimization"
-      ],
-      experience: [
-        {
-          company: "Tech Innovations Inc.",
-          role: "Frontend Developer",
-          years: "2022 - Present",
-          details: "Developed and maintained responsive web applications using React and TypeScript. Collaborated with design team to implement pixel-perfect UI components. Improved application performance by 35% through code optimization."
-        },
-        {
-          company: "Digital Solutions Co.",
-          role: "Junior Web Developer",
-          years: "2021 - 2022",
-          details: "Built interactive user interfaces for client projects. Worked with cross-functional teams to deliver projects on time. Gained experience in modern JavaScript frameworks and agile development practices."
-        }
-      ],
-      projects: [
-        {
-          name: "E-commerce Dashboard",
-          url: "https://github.com/sarah/ecommerce-dashboard",
-          description: "React-based admin dashboard for managing online store inventory, orders, and analytics with real-time data visualization."
-        },
-        {
-          name: "Weather App",
-          url: "https://github.com/sarah/weather-app",
-          description: "Progressive Web App built with React and OpenWeather API, featuring geolocation, forecasts, and offline functionality."
-        },
-        {
-          name: "Portfolio Website",
-          url: "https://sarahjohnson.dev",
-          description: "Personal portfolio showcasing projects and skills, built with Next.js and deployed on Vercel with perfect Lighthouse scores."
-        }
-      ],
-      contactLinks: [
-        { type: "Email", url: "mailto:sarah.johnson@example.com" },
-        { type: "LinkedIn", url: "https://linkedin.com/in/sarah-johnson-dev" },
-        { type: "GitHub", url: "https://github.com/sarah" },
-        { type: "Portfolio", url: "https://sarahjohnson.dev" }
-      ]
-    },
-    {
-      name: "Michael Chen",
-      title: "Full Stack Engineer",
-      summary: "Experienced full-stack engineer with 5+ years developing scalable web applications. Expertise in Node.js, React, and cloud technologies. Led multiple teams and delivered high-impact projects.",
-      skills: [
-        "Node.js", "React", "TypeScript", "Python", "PostgreSQL", "MongoDB",
-        "AWS", "Docker", "Kubernetes", "GraphQL", "REST APIs", "Microservices"
-      ],
-      experience: [
-        {
-          company: "CloudTech Solutions",
-          role: "Senior Full Stack Engineer",
-          years: "2020 - Present",
-          details: "Led development of microservices architecture serving 1M+ users. Mentored junior developers and established coding standards. Reduced deployment time by 60% through CI/CD pipeline improvements."
-        },
-        {
-          company: "StartupXYZ",
-          role: "Full Stack Developer",
-          years: "2019 - 2020",
-          details: "Built complete web applications from concept to deployment. Worked closely with product team to define requirements and user stories. Implemented real-time features using WebSockets."
-        }
-      ],
-      projects: [
-        {
-          name: "Microservices Platform",
-          url: "https://github.com/mchen/microservices-platform",
-          description: "Scalable microservices architecture with Docker, Kubernetes, and automated deployment pipelines handling millions of requests."
-        },
-        {
-          name: "Real-time Chat Application",
-          url: "https://github.com/mchen/realtime-chat",
-          description: "Full-stack chat application with WebSocket connections, user authentication, and message persistence using Node.js and React."
-        }
-      ],
-      contactLinks: [
-        { type: "Email", url: "mailto:michael.chen@example.com" },
-        { type: "LinkedIn", url: "https://linkedin.com/in/michael-chen-engineer" },
-        { type: "GitHub", url: "https://github.com/mchen" }
-      ]
-    }
-  ];
-
-  // Simple logic to return different profiles based on file characteristics
-  const profileIndex = fileName.includes('sarah') || fileName.includes('frontend') ? 0 : 
-                      Math.floor(Math.random() * profiles.length);
+  // Generate sample text based on file name for demonstration
+  if (fileName.includes('sarah') || fileName.includes('frontend')) {
+    return `
+    Sarah Johnson
+    Frontend Developer
+    
+    Professional Summary:
+    Passionate frontend developer with 3+ years of experience creating responsive web applications using React, TypeScript, and modern CSS frameworks.
+    
+    Skills:
+    React, TypeScript, JavaScript, HTML5, CSS3, Tailwind CSS, Next.js, Redux, Git, Figma
+    
+    Experience:
+    Frontend Developer at Tech Innovations Inc. (2022 - Present)
+    - Developed responsive web applications using React and TypeScript
+    - Improved application performance by 35%
+    
+    Junior Web Developer at Digital Solutions Co. (2021 - 2022)
+    - Built interactive user interfaces for client projects
+    
+    Projects:
+    E-commerce Dashboard - React-based admin dashboard
+    Weather App - Progressive Web App with React
+    
+    Contact:
+    Email: sarah.johnson@example.com
+    LinkedIn: linkedin.com/in/sarah-johnson-dev
+    GitHub: github.com/sarah
+    `;
+  }
   
-  // Simulate parsing delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  return `
+  Michael Chen
+  Full Stack Engineer
   
-  return profiles[profileIndex];
+  Professional Summary:
+  Experienced full-stack engineer with 5+ years developing scalable web applications. Expertise in Node.js, React, and cloud technologies.
+  
+  Skills:
+  Node.js, React, TypeScript, Python, PostgreSQL, MongoDB, AWS, Docker, Kubernetes
+  
+  Experience:
+  Senior Full Stack Engineer at CloudTech Solutions (2020 - Present)
+  - Led development of microservices architecture serving 1M+ users
+  - Reduced deployment time by 60%
+  
+  Projects:
+  Microservices Platform - Scalable architecture with Docker and Kubernetes
+  Real-time Chat Application - WebSocket connections with Node.js
+  
+  Contact:
+  Email: michael.chen@example.com
+  LinkedIn: linkedin.com/in/michael-chen-engineer
+  GitHub: github.com/mchen
+  `;
 };
 
-// Fallback data if parsing fails
+export const parseResumeFromFile = async (file: File): Promise<ParsedResume> => {
+  try {
+    // Extract text from the file
+    const resumeText = await extractTextFromPDF(file);
+    
+    // Call our edge function to parse the resume
+    const { data, error } = await supabase.functions.invoke('parse-resume', {
+      body: { resumeText }
+    });
+
+    if (error) {
+      console.error('Error calling parse-resume function:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error parsing resume:', error);
+    return getDefaultResumeData();
+  }
+};
+
 export const getDefaultResumeData = (): ParsedResume => ({
   name: "Professional User",
   title: "Software Developer",
