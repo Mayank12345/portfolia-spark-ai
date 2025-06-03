@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { parseResumeFromFile, type ParsedResume } from "@/utils/resumeParser";
 
 interface ResumeUploaderProps {
   onUploadSuccess: (portfolioId: string) => void;
@@ -33,6 +34,27 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const savePortfolioToDatabase = async (sessionId: string, parsedData: ParsedResume) => {
+    const { error } = await supabase
+      .from('portfolios')
+      .insert({
+        session_id: sessionId,
+        name: parsedData.name,
+        title: parsedData.title,
+        summary: parsedData.summary,
+        skills: parsedData.skills,
+        experience: parsedData.experience,
+        projects: parsedData.projects,
+        contact_links: parsedData.contactLinks,
+        education: parsedData.education || []
+      });
+
+    if (error) {
+      console.error('Error saving portfolio to database:', error);
+      throw error;
     }
   };
 
@@ -67,26 +89,35 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${sessionId}/resume_${Date.now()}.${fileExt}`;
 
-      const { error } = await supabase.storage
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
         .from('resumes')
         .upload(fileName, file);
 
-      if (error) {
-        console.error('Upload error:', error);
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
         toast({
           title: "Upload failed",
-          description: error.message,
+          description: uploadError.message,
           variant: "destructive",
         });
         setUploadStatus('error');
-      } else {
-        setUploadStatus('success');
-        toast({
-          title: "Success!",
-          description: "Resume uploaded successfully! Generating your portfolio...",
-        });
-        onUploadSuccess(sessionId);
+        return;
       }
+
+      // Parse the resume
+      const parsedData = await parseResumeFromFile(file);
+      
+      // Save parsed data to database
+      await savePortfolioToDatabase(sessionId, parsedData);
+      
+      setUploadStatus('success');
+      toast({
+        title: "Success!",
+        description: "Resume uploaded and portfolio generated successfully!",
+      });
+      onUploadSuccess(sessionId);
+
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
@@ -145,7 +176,7 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
             {uploading ? (
               <>
                 <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-                <p className="text-primary font-medium">Uploading your resume...</p>
+                <p className="text-primary font-medium">Processing your resume...</p>
               </>
             ) : uploadStatus === 'success' ? (
               <>

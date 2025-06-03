@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { parseResumeFromFile, getDefaultResumeData, type ParsedResume } from "@/utils/resumeParser";
+import { getDefaultResumeData, type ParsedResume } from "@/utils/resumeParser";
 import { ArrowLeft, Mail, ExternalLink, MapPin, Download, Share2, Globe, Briefcase, GraduationCap, Code2, User, Phone, Calendar } from "lucide-react";
 
 const PortfolioPage = () => {
@@ -21,32 +21,29 @@ const PortfolioPage = () => {
           return;
         }
 
-        const { data: files } = await supabase
-          .storage
-          .from('resumes')
-          .list(userId, { sortBy: { column: 'created_at', order: 'desc' }, limit: 1 });
+        // Fetch portfolio data from database
+        const { data: portfolioData, error } = await supabase
+          .from('portfolios')
+          .select('*')
+          .eq('session_id', userId)
+          .single();
 
-        if (files && files.length > 0) {
-          const fileName = files[0].name;
-          
-          const { data: fileData } = await supabase
-            .storage
-            .from('resumes')
-            .download(`${userId}/${fileName}`);
-
-          if (fileData) {
-            const file = new File([fileData], fileName, { type: 'application/pdf' });
-            
-            try {
-              const parsedData = await parseResumeFromFile(file);
-              setPortfolio(parsedData);
-            } catch (error) {
-              console.error("Error parsing resume:", error);
-              setPortfolio(getDefaultResumeData());
-            }
-          } else {
-            setPortfolio(getDefaultResumeData());
-          }
+        if (error) {
+          console.error("Error fetching portfolio:", error);
+          setPortfolio(getDefaultResumeData());
+        } else if (portfolioData) {
+          // Convert database format to ParsedResume format
+          const formattedPortfolio: ParsedResume = {
+            name: portfolioData.name,
+            title: portfolioData.title,
+            summary: portfolioData.summary,
+            skills: portfolioData.skills,
+            experience: portfolioData.experience,
+            projects: portfolioData.projects,
+            contactLinks: portfolioData.contact_links,
+            education: portfolioData.education
+          };
+          setPortfolio(formattedPortfolio);
         } else {
           setPortfolio(getDefaultResumeData());
         }
@@ -70,8 +67,8 @@ const PortfolioPage = () => {
             <div className="absolute inset-0 h-16 w-16 border-4 border-transparent border-t-blue-300 rounded-full mx-auto animate-ping"></div>
           </div>
           <div className="space-y-2">
-            <p className="text-xl font-medium text-slate-700">Crafting your portfolio...</p>
-            <p className="text-slate-500">This might take a moment</p>
+            <p className="text-xl font-medium text-slate-700">Loading your portfolio...</p>
+            <p className="text-slate-500">This will just take a moment</p>
           </div>
         </div>
       </div>
