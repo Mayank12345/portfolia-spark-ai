@@ -2,167 +2,87 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload, User, Settings } from "lucide-react";
+import { FileText, User, Settings, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import ResumeUploader from "./ResumeUploader";
 
 interface DashboardContentProps {
   userEmail: string;
 }
 
 const DashboardContent = ({ userEmail }: DashboardContentProps) => {
-  const [resumeUploaded, setResumeUploaded] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [portfolioId, setPortfolioId] = useState<string | null>(null);
-  const { toast } = useToast();
 
-  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Check file type
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a PDF or Word document.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload a file smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploading(true);
-    
-    try {
-      // Generate a unique session ID for this upload
-      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${sessionId}/resume_${Date.now()}.${fileExt}`;
-
-      const { error } = await supabase.storage
-        .from('resumes')
-        .upload(fileName, file);
-
-      if (error) {
-        console.error('Upload error:', error);
-        toast({
-          title: "Upload failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        setResumeUploaded(true);
-        setPortfolioId(sessionId);
-        toast({
-          title: "Success!",
-          description: "Resume uploaded successfully! You can now view your portfolio.",
-        });
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      toast({
-        title: "Upload failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-      // Reset the input
-      event.target.value = '';
-    }
+  const handleUploadSuccess = (newPortfolioId: string) => {
+    setPortfolioId(newPortfolioId);
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {/* Welcome Card */}
-      <Card className="p-6 md:col-span-2 lg:col-span-3">
-        <div className="flex items-center gap-3">
-          <User className="h-8 w-8 text-primary" />
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center gap-3">
+          <User className="h-10 w-10 text-primary" />
           <div>
-            <h2 className="text-2xl font-bold">Welcome!</h2>
-            <p className="text-muted-foreground">Upload your resume to generate a beautiful portfolio</p>
+            <h1 className="text-3xl font-bold">Create Your Portfolio</h1>
+            <p className="text-muted-foreground text-lg">
+              Transform your resume into a stunning portfolio website
+            </p>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Resume Upload Card */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Upload className="h-6 w-6 text-primary" />
-          <h3 className="text-lg font-semibold">Upload Resume</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Upload your resume to get started with portfolio generation
-        </p>
+      {/* Resume Upload Section */}
+      <div className="space-y-6">
+        <ResumeUploader onUploadSuccess={handleUploadSuccess} />
         
-        <div className="w-full">
-          <input
-            type="file"
-            id="resume-upload"
-            accept=".pdf,.doc,.docx"
-            onChange={handleResumeUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-          <Button 
-            className="w-full" 
-            onClick={() => document.getElementById('resume-upload')?.click()}
-            disabled={uploading}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            {uploading ? "Uploading..." : "Upload Resume"}
-          </Button>
-        </div>
-        
-        {resumeUploaded && (
-          <p className="text-sm text-green-600 mt-2">✓ Resume uploaded successfully!</p>
+        {portfolioId && (
+          <Card className="p-6 border-green-200 bg-green-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText className="h-6 w-6 text-green-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-green-800">Portfolio Ready!</h3>
+                  <p className="text-green-600">Your portfolio has been generated successfully</p>
+                </div>
+              </div>
+              <Button asChild className="bg-green-600 hover:bg-green-700">
+                <Link to={`/portfolio/${portfolioId}`}>
+                  View Portfolio
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </Card>
         )}
-      </Card>
+      </div>
 
-      {/* Portfolio Status Card */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <FileText className="h-6 w-6 text-primary" />
-          <h3 className="text-lg font-semibold">Portfolio Status</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          {resumeUploaded ? "Portfolio ready to view!" : "Upload a resume to generate your portfolio"}
-        </p>
-        {resumeUploaded && portfolioId ? (
-          <Button asChild variant="default" className="w-full">
-            <Link to={`/portfolio/${portfolioId}`}>View Portfolio</Link>
-          </Button>
-        ) : (
-          <Button variant="outline" className="w-full" disabled>
-            Upload Resume First
-          </Button>
-        )}
-      </Card>
+      {/* Features Section */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="p-6 text-center">
+          <Settings className="h-8 w-8 text-primary mx-auto mb-3" />
+          <h3 className="font-semibold mb-2">AI-Powered</h3>
+          <p className="text-sm text-muted-foreground">
+            Our AI analyzes your resume and creates a personalized portfolio
+          </p>
+        </Card>
 
-      {/* Info Card */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Settings className="h-6 w-6 text-primary" />
-          <h3 className="text-lg font-semibold">How it works</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Simply upload your resume and we'll generate a beautiful portfolio for you instantly
-        </p>
-        <Button variant="outline" className="w-full" disabled>
-          No setup required!
-        </Button>
-      </Card>
+        <Card className="p-6 text-center">
+          <FileText className="h-8 w-8 text-primary mx-auto mb-3" />
+          <h3 className="font-semibold mb-2">Instant Generation</h3>
+          <p className="text-sm text-muted-foreground">
+            Get your portfolio ready in seconds, no manual work required
+          </p>
+        </Card>
+
+        <Card className="p-6 text-center">
+          <User className="h-8 w-8 text-primary mx-auto mb-3" />
+          <h3 className="font-semibold mb-2">Professional Design</h3>
+          <p className="text-sm text-muted-foreground">
+            Clean, modern design that showcases your skills professionally
+          </p>
+        </Card>
+      </div>
     </div>
   );
 };
