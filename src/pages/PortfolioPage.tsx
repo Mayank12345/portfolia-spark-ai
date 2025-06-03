@@ -38,16 +38,32 @@ const PortfolioPage = () => {
           console.error("Error fetching portfolio:", error);
           setPortfolio(null);
         } else if (data) {
-          // Transform database format to ParsedResume format
+          // Transform database format to ParsedResume format with proper type casting
           const formattedPortfolio: ParsedResume = {
             name: data.name,
             title: data.title,
             summary: data.summary,
             skills: data.skills || [],
-            experience: Array.isArray(data.experience) ? data.experience : [],
-            projects: Array.isArray(data.projects) ? data.projects : [],
-            contactLinks: Array.isArray(data.contact_links) ? data.contact_links : [],
-            education: Array.isArray(data.education) ? data.education : []
+            experience: Array.isArray(data.experience) ? data.experience as Array<{
+              company: string;
+              role: string;
+              years: string;
+              details: string;
+            }> : [],
+            projects: Array.isArray(data.projects) ? data.projects as Array<{
+              name: string;
+              url: string;
+              description: string;
+            }> : [],
+            contactLinks: Array.isArray(data.contact_links) ? data.contact_links as Array<{
+              type: string;
+              url: string;
+            }> : [],
+            education: Array.isArray(data.education) ? data.education as Array<{
+              institution: string;
+              degree: string;
+              year: string;
+            }> : []
           };
           
           setPortfolio(formattedPortfolio);
