@@ -6,6 +6,7 @@ import { FileText, Upload, User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardContentProps {
   userEmail: string;
@@ -15,13 +16,21 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
-  
-  // Mock user ID for demo purposes - in real app this would come from auth
-  const mockUserId = "user123";
+  const { user } = useAuth();
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload your resume.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Check file type
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -48,7 +57,7 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
     
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${mockUserId}/resume_${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/resume_${Date.now()}.${fileExt}`;
 
       const { error } = await supabase.storage
         .from('resumes')
@@ -111,16 +120,16 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
             id="resume-upload"
             accept=".pdf,.doc,.docx"
             onChange={handleResumeUpload}
-            disabled={uploading}
+            disabled={uploading || !user}
             className="hidden"
           />
           <Button 
             className="w-full" 
             onClick={() => document.getElementById('resume-upload')?.click()}
-            disabled={uploading}
+            disabled={uploading || !user}
           >
             <FileText className="h-4 w-4 mr-2" />
-            {uploading ? "Uploading..." : "Upload Resume"}
+            {uploading ? "Uploading..." : !user ? "Login Required" : "Upload Resume"}
           </Button>
         </div>
         
@@ -140,7 +149,7 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
         </p>
         {resumeUploaded ? (
           <Button asChild variant="default" className="w-full">
-            <Link to={`/portfolio/${mockUserId}`}>See Portfolio</Link>
+            <Link to={`/portfolio/${user?.id || 'demo'}`}>See Portfolio</Link>
           </Button>
         ) : (
           <Button variant="outline" className="w-full" disabled>
