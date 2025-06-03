@@ -1,13 +1,26 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Upload, User, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface DashboardContentProps {
   userEmail: string;
 }
 
 const DashboardContent = ({ userEmail }: DashboardContentProps) => {
+  const [resumeUploaded, setResumeUploaded] = useState(false);
+  
+  // Mock user ID for demo purposes - in real app this would come from auth
+  const mockUserId = "user123";
+
+  const handleResumeUpload = () => {
+    // Mock resume upload - in real app this would handle file upload to Supabase Storage
+    console.log("Resume upload clicked");
+    setResumeUploaded(true);
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {/* Welcome Card */}
@@ -30,10 +43,13 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
         <p className="text-sm text-muted-foreground mb-4">
           Upload your resume to get started with portfolio generation
         </p>
-        <Button className="w-full">
+        <Button className="w-full" onClick={handleResumeUpload}>
           <FileText className="h-4 w-4 mr-2" />
           Upload Resume
         </Button>
+        {resumeUploaded && (
+          <p className="text-sm text-green-600 mt-2">✓ Resume uploaded successfully!</p>
+        )}
       </Card>
 
       {/* Portfolio Status Card */}
@@ -43,11 +59,17 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
           <h3 className="text-lg font-semibold">Portfolio Status</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          No portfolio created yet
+          {resumeUploaded ? "Portfolio ready to view!" : "No portfolio created yet"}
         </p>
-        <Button variant="outline" className="w-full" disabled>
-          Generate Portfolio
-        </Button>
+        {resumeUploaded ? (
+          <Button asChild variant="default" className="w-full">
+            <Link to={`/portfolio/${mockUserId}`}>See Portfolio</Link>
+          </Button>
+        ) : (
+          <Button variant="outline" className="w-full" disabled>
+            Generate Portfolio
+          </Button>
+        )}
       </Card>
 
       {/* Settings Card */}

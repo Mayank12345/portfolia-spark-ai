@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import PortfolioPage from "./pages/PortfolioPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             {/* Dashboard route - protected page for authenticated users */}
             <Route path="/dashboard" element={<Dashboard />} />
+            {/* Portfolio route - read-only portfolio page */}
+            <Route path="/portfolio/:userId" element={<PortfolioPage />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
