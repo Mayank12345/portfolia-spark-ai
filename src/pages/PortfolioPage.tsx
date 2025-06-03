@@ -15,7 +15,7 @@ import PortfolioContact from "@/components/portfolio/PortfolioContact";
 
 const PortfolioPage = () => {
   const { userId } = useParams();
-  const [portfolio, setPortfolio] = useState<any | null>(null);
+  const [portfolio, setPortfolio] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,13 +28,33 @@ const PortfolioPage = () => {
 
         console.log('Fetching portfolio for user ID:', userId);
 
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('portfolios')
-          .select('content')
-          .eq('user_id', userId)
+          .select('*')
+          .eq('session_id', userId)
           .single();
 
-        setPortfolio(data?.content ?? null);
+        if (error) {
+          console.error("Error fetching portfolio:", error);
+          setPortfolio(null);
+        } else if (data) {
+          // Transform database format to ParsedResume format
+          const formattedPortfolio: ParsedResume = {
+            name: data.name,
+            title: data.title,
+            summary: data.summary,
+            skills: data.skills || [],
+            experience: Array.isArray(data.experience) ? data.experience : [],
+            projects: Array.isArray(data.projects) ? data.projects : [],
+            contactLinks: Array.isArray(data.contact_links) ? data.contact_links : [],
+            education: Array.isArray(data.education) ? data.education : []
+          };
+          
+          setPortfolio(formattedPortfolio);
+        } else {
+          setPortfolio(null);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error("Error fetching portfolio:", error);
