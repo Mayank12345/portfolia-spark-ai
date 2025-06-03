@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ interface ResumeUploaderProps {
 const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error' | 'uploaded'>('idle');
   const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
@@ -108,7 +109,7 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
       console.log('Attempting to parse resume file...');
       const parsedData = await parseResumeFromFile(file);
       
-      // Only save to database if we have valid parsed data
+      // Only show success and call onUploadSuccess if we have valid parsed data
       if (parsedData && parsedData.name && parsedData.name !== "Professional User") {
         await savePortfolioToDatabase(sessionId, parsedData);
         
@@ -119,14 +120,14 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
         });
         onUploadSuccess(sessionId);
       } else {
-        // If parsing failed or returned default data, don't save anything
-        console.log('Resume parsing incomplete, portfolio will show placeholder');
+        // If parsing failed, just show that file was uploaded but portfolio generation is pending
+        console.log('Resume parsing incomplete, file uploaded but no portfolio data saved');
+        setUploadStatus('uploaded');
         toast({
-          title: "Upload successful",
-          description: "Resume uploaded. Portfolio generation is in progress...",
+          title: "File uploaded",
+          description: "Resume uploaded successfully. Portfolio generation will be available soon.",
         });
-        setUploadStatus('success');
-        onUploadSuccess(sessionId);
+        // Don't call onUploadSuccess since no portfolio was actually created
       }
 
     } catch (error) {
@@ -165,6 +166,8 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
               ? "border-primary bg-primary/5"
               : uploadStatus === 'success'
               ? "border-green-500 bg-green-50"
+              : uploadStatus === 'uploaded'
+              ? "border-blue-500 bg-blue-50"
               : uploadStatus === 'error'
               ? "border-red-500 bg-red-50"
               : "border-gray-300 hover:border-primary hover:bg-gray-50"
@@ -192,7 +195,12 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
             ) : uploadStatus === 'success' ? (
               <>
                 <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                <p className="text-green-600 font-medium">Resume uploaded successfully!</p>
+                <p className="text-green-600 font-medium">Portfolio generated successfully!</p>
+              </>
+            ) : uploadStatus === 'uploaded' ? (
+              <>
+                <CheckCircle className="h-8 w-8 text-blue-500 mx-auto" />
+                <p className="text-blue-600 font-medium">File uploaded! Portfolio generation coming soon.</p>
               </>
             ) : uploadStatus === 'error' ? (
               <>
@@ -218,7 +226,7 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
           </div>
         </div>
 
-        {!uploading && uploadStatus !== 'success' && (
+        {!uploading && uploadStatus !== 'success' && uploadStatus !== 'uploaded' && (
           <div className="mt-6">
             <Button
               className="w-full"
