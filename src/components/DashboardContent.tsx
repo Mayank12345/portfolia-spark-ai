@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Upload, User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardContentProps {
   userEmail: string;
@@ -11,14 +13,73 @@ interface DashboardContentProps {
 
 const DashboardContent = ({ userEmail }: DashboardContentProps) => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
   
   // Mock user ID for demo purposes - in real app this would come from auth
   const mockUserId = "user123";
 
-  const handleResumeUpload = () => {
-    // Mock resume upload - in real app this would handle file upload to Supabase Storage
-    console.log("Resume upload clicked");
-    setResumeUploaded(true);
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF or Word document.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${mockUserId}/resume_${Date.now()}.${fileExt}`;
+
+      const { error } = await supabase.storage
+        .from('resumes')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: "Upload failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setResumeUploaded(true);
+        toast({
+          title: "Success!",
+          description: "Resume uploaded successfully!",
+        });
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Upload failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      // Reset the input
+      event.target.value = '';
+    }
   };
 
   return (
@@ -43,10 +104,26 @@ const DashboardContent = ({ userEmail }: DashboardContentProps) => {
         <p className="text-sm text-muted-foreground mb-4">
           Upload your resume to get started with portfolio generation
         </p>
-        <Button className="w-full" onClick={handleResumeUpload}>
-          <FileText className="h-4 w-4 mr-2" />
-          Upload Resume
-        </Button>
+        
+        <div className="w-full">
+          <input
+            type="file"
+            id="resume-upload"
+            accept=".pdf,.doc,.docx"
+            onChange={handleResumeUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+          <Button 
+            className="w-full" 
+            onClick={() => document.getElementById('resume-upload')?.click()}
+            disabled={uploading}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {uploading ? "Uploading..." : "Upload Resume"}
+          </Button>
+        </div>
+        
         {resumeUploaded && (
           <p className="text-sm text-green-600 mt-2">✓ Resume uploaded successfully!</p>
         )}
