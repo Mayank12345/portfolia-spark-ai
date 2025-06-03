@@ -109,7 +109,7 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
       console.log('Attempting to parse resume file...');
       const parsedData = await parseResumeFromFile(file);
       
-      // Only show success and call onUploadSuccess if we have valid parsed data
+      // Only save and redirect if we have valid parsed data
       if (parsedData && parsedData.name && parsedData.name !== "Professional User") {
         await savePortfolioToDatabase(sessionId, parsedData);
         
@@ -120,14 +120,15 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
         });
         onUploadSuccess(sessionId);
       } else {
-        // If parsing failed, just show that file was uploaded but portfolio generation is pending
+        // If parsing returned null or invalid data, just show upload success
+        // DO NOT save any data to the database or call onUploadSuccess
         console.log('Resume parsing incomplete, file uploaded but no portfolio data saved');
         setUploadStatus('uploaded');
         toast({
           title: "File uploaded",
           description: "Resume uploaded successfully. Portfolio generation will be available soon.",
         });
-        // Don't call onUploadSuccess since no portfolio was actually created
+        // Intentionally NOT calling onUploadSuccess since no portfolio was created
       }
 
     } catch (error) {
