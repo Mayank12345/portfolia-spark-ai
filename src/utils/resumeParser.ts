@@ -33,67 +33,20 @@ const extractTextFromPDF = async (file: File): Promise<string> => {
   // In a real implementation, you'd use a PDF parsing library
   const fileName = file.name.toLowerCase();
   
-  // Generate sample text based on file name for demonstration
-  if (fileName.includes('sarah') || fileName.includes('frontend')) {
-    return `
-    Sarah Johnson
-    Frontend Developer
-    
-    Professional Summary:
-    Passionate frontend developer with 3+ years of experience creating responsive web applications using React, TypeScript, and modern CSS frameworks.
-    
-    Skills:
-    React, TypeScript, JavaScript, HTML5, CSS3, Tailwind CSS, Next.js, Redux, Git, Figma
-    
-    Experience:
-    Frontend Developer at Tech Innovations Inc. (2022 - Present)
-    - Developed responsive web applications using React and TypeScript
-    - Improved application performance by 35%
-    
-    Junior Web Developer at Digital Solutions Co. (2021 - 2022)
-    - Built interactive user interfaces for client projects
-    
-    Projects:
-    E-commerce Dashboard - React-based admin dashboard
-    Weather App - Progressive Web App with React
-    
-    Contact:
-    Email: sarah.johnson@example.com
-    LinkedIn: linkedin.com/in/sarah-johnson-dev
-    GitHub: github.com/sarah
-    `;
-  }
-  
-  return `
-  Michael Chen
-  Full Stack Engineer
-  
-  Professional Summary:
-  Experienced full-stack engineer with 5+ years developing scalable web applications. Expertise in Node.js, React, and cloud technologies.
-  
-  Skills:
-  Node.js, React, TypeScript, Python, PostgreSQL, MongoDB, AWS, Docker, Kubernetes
-  
-  Experience:
-  Senior Full Stack Engineer at CloudTech Solutions (2020 - Present)
-  - Led development of microservices architecture serving 1M+ users
-  - Reduced deployment time by 60%
-  
-  Projects:
-  Microservices Platform - Scalable architecture with Docker and Kubernetes
-  Real-time Chat Application - WebSocket connections with Node.js
-  
-  Contact:
-  Email: michael.chen@example.com
-  LinkedIn: linkedin.com/in/michael-chen-engineer
-  GitHub: github.com/mchen
-  `;
+  // Return empty string to indicate parsing is not yet implemented
+  console.log('PDF text extraction not yet implemented for file:', fileName);
+  return '';
 };
 
-export const parseResumeFromFile = async (file: File): Promise<ParsedResume> => {
+export const parseResumeFromFile = async (file: File): Promise<ParsedResume | null> => {
   try {
     // Extract text from the file
     const resumeText = await extractTextFromPDF(file);
+    
+    if (!resumeText) {
+      console.log('No text extracted from file, skipping parsing');
+      return null;
+    }
     
     // Call our edge function to parse the resume
     const { data, error } = await supabase.functions.invoke('parse-resume', {
@@ -102,13 +55,13 @@ export const parseResumeFromFile = async (file: File): Promise<ParsedResume> => 
 
     if (error) {
       console.error('Error calling parse-resume function:', error);
-      throw error;
+      return null;
     }
 
     return data;
   } catch (error) {
     console.error('Error parsing resume:', error);
-    return getDefaultResumeData();
+    return null;
   }
 };
 

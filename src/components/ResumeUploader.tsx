@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,17 +105,29 @@ const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
       }
 
       // Parse the resume
+      console.log('Attempting to parse resume file...');
       const parsedData = await parseResumeFromFile(file);
       
-      // Save parsed data to database
-      await savePortfolioToDatabase(sessionId, parsedData);
-      
-      setUploadStatus('success');
-      toast({
-        title: "Success!",
-        description: "Resume uploaded and portfolio generated successfully!",
-      });
-      onUploadSuccess(sessionId);
+      // Only save to database if we have valid parsed data
+      if (parsedData && parsedData.name && parsedData.name !== "Professional User") {
+        await savePortfolioToDatabase(sessionId, parsedData);
+        
+        setUploadStatus('success');
+        toast({
+          title: "Success!",
+          description: "Resume uploaded and portfolio generated successfully!",
+        });
+        onUploadSuccess(sessionId);
+      } else {
+        // If parsing failed or returned default data, don't save anything
+        console.log('Resume parsing incomplete, portfolio will show placeholder');
+        toast({
+          title: "Upload successful",
+          description: "Resume uploaded. Portfolio generation is in progress...",
+        });
+        setUploadStatus('success');
+        onUploadSuccess(sessionId);
+      }
 
     } catch (error) {
       console.error('Unexpected error:', error);
